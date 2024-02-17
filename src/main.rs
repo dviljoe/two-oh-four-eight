@@ -27,32 +27,43 @@ const TILE_SPACER: f32 = 10.0;
 #[derive(Component)]
 struct Board {
     size: u8,
+    size_px: f32,
+}
+
+impl Board {
+    fn new(size: u8) -> Self {
+        let size_px = f32::from(size) * TILE_SIZE + f32::from(size + 1) * TILE_SPACER;
+        Board { size, size_px }
+    }
+
+    fn sprite_size(&self) -> Vec2 {
+        Vec2::new(self.size_px, self.size_px)
+    }
+
+    fn cell_position_to_coordinate(&self, pos: u8) -> f32 {
+        let bottom_left = (-self.size_px / 2.0) + (0.5 * TILE_SIZE);
+        bottom_left + (f32::from(pos) * TILE_SIZE) + (f32::from(pos + 1) * TILE_SPACER)
+    }
 }
 
 fn spawn_board(mut commands: Commands) {
-    let board = Board { size: 4 };
-    let board_size = f32::from(board.size) * TILE_SIZE + f32::from(board.size + 1) * TILE_SPACER;
+    let board = Board::new(4);
 
     commands
         .spawn(SpriteBundle {
             sprite: Sprite {
                 color: colours::BOARD,
-                custom_size: Some(Vec2::new(board_size, board_size)),
+                custom_size: Some(board.sprite_size()),
                 ..default()
             },
             ..default()
         })
         .with_children(|builder| {
-            let tile_offset = (-board_size / 2.0) + (0.5 * TILE_SIZE);
             let tiles = (0..board.size).cartesian_product(0..board.size);
 
             for tile in tiles {
-                let tile_x = tile_offset
-                    + f32::from(tile.0) * TILE_SIZE
-                    + f32::from(tile.0 + 1) * TILE_SPACER;
-                let tile_y = tile_offset
-                    + f32::from(tile.1) * TILE_SIZE
-                    + f32::from(tile.1 + 1) * TILE_SPACER;
+                let tile_x = board.cell_position_to_coordinate(tile.0);
+                let tile_y = board.cell_position_to_coordinate(tile.1);
 
                 builder.spawn(SpriteBundle {
                     sprite: Sprite {
