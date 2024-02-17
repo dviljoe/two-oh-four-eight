@@ -3370,6 +3370,7 @@ name = "two-oh-four-eight"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "itertools",
 ]
 
 [[package]]
