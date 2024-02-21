@@ -19,6 +19,7 @@ fn main() {
             Startup,
             (setup, spawn_board, apply_deferred, spawn_tiles).chain(),
         )
+        .add_systems(Update, (render_tile_points, board_shift))
         .run()
 }
 
@@ -155,5 +156,64 @@ fn spawn_tiles(mut commands: Commands, query_board: Query<&Board>, font_spec: Re
             })
             .insert(Points { value: 2 })
             .insert(pos);
+    }
+}
+
+fn render_tile_points(
+    mut texts: Query<&mut Text, With<TileText>>,
+    tiles: Query<(&Points, &Children)>,
+) {
+    for (points, children) in tiles.iter() {
+        if let Some(entity) = children.first() {
+            let mut text = texts.get_mut(*entity).expect("expected Text to exist.");
+            let text_section = text
+                .sections
+                .first_mut()
+                .expect("expect first section to be accessible as a mutable");
+            text_section.value = points.value.to_string();
+        }
+    }
+}
+
+enum BoardShift {
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
+impl TryFrom<&KeyCode> for BoardShift {
+    type Error = &'static str;
+
+    fn try_from(value: &KeyCode) -> Result<Self, Self::Error> {
+        match value {
+            KeyCode::Left => Ok(BoardShift::Left),
+            KeyCode::Up => Ok(BoardShift::Up),
+            KeyCode::Right => Ok(BoardShift::Right),
+            KeyCode::Down => Ok(BoardShift::Down),
+            _ => Err("not a valid board_shift key"),
+        }
+    }
+}
+
+fn board_shift(input: Res<Input<KeyCode>>) {
+    let shift_direction = input
+        .get_just_pressed()
+        .find_map(|key_code| BoardShift::try_from(key_code).ok());
+
+    match shift_direction {
+        Some(BoardShift::Left) => {
+            dbg!("left");
+        }
+        Some(BoardShift::Right) => {
+            dbg!("right");
+        }
+        Some(BoardShift::Up) => {
+            dbg!("up");
+        }
+        Some(BoardShift::Down) => {
+            dbg!("down");
+        }
+        None => (),
     }
 }
