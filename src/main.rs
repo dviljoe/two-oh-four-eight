@@ -1,4 +1,5 @@
 mod colours;
+mod ui;
 
 use bevy::prelude::*;
 use itertools::Itertools;
@@ -15,7 +16,9 @@ fn main() {
             }),
             ..default()
         }))
+        .add_plugins(ui::GameUIPlugin)
         .init_resource::<FontSpec>()
+        .init_resource::<Game>()
         .add_systems(
             Startup,
             (setup, spawn_board, apply_deferred, spawn_tiles).chain(),
@@ -52,6 +55,10 @@ impl FromWorld for FontSpec {
             family: asset_server.load("fonts/FiraSans-Bold.ttf"),
         }
     }
+}
+#[derive(Default, Resource)]
+struct Game {
+    score: u32,
 }
 
 #[derive(Component)]
@@ -277,12 +284,14 @@ fn board_shift(
     mut tiles: Query<(Entity, &mut Position, &mut Points)>,
     query_board: Query<&Board>,
     mut tile_writer: EventWriter<NewTileEvent>,
+    mut game: ResMut<Game>,
 ) {
     let shift_direction = input
         .get_just_pressed()
         .find_map(|key_code| BoardShift::try_from(key_code).ok());
 
     if let Some(shift) = shift_direction {
+        dbg!(game.score);
         tile_writer.send(NewTileEvent);
 
         let mut it = tiles
@@ -309,6 +318,9 @@ fn board_shift(
                         .next()
                         .expect("A peeked tile should always exist when next() is called");
                     tile.2.value = tile.2.value + real_next_tile.2.value;
+
+                    // Add to total score
+                    game.score += tile.2.value;
 
                     // Despawn the tile from the board
                     commands.entity(real_next_tile.0).despawn_recursive();
