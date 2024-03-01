@@ -25,7 +25,7 @@ fn setup_ui(mut commands: Commands, font_spec: Res<FontSpec>) {
         })
         .with_children(|parent| {
             parent.spawn(TextBundle::from_section(
-                "Two-of-four-eight",
+                "Two-oh-four-eight",
                 TextStyle {
                     font: font_spec.family.clone(),
                     font_size: 40.0,
@@ -33,25 +33,25 @@ fn setup_ui(mut commands: Commands, font_spec: Res<FontSpec>) {
                 },
             ));
 
-            parent
-                .spawn(NodeBundle {
-                    style: Style {
-                        height: Val::Auto,
-                        width: Val::Auto,
-                        justify_content: JustifyContent::Center,
-                        row_gap: Val::Px(20.0),
-                        column_gap: Val::Px(20.0),
-                        ..default()
-                    },
-                    ..default()
-                })
-                .with_children(|parent| {
-                    //scorebox
-                    parent.spawn(NodeBundle {
-                        style: {},
-                        background_color: BackgroundColor(colours::SCORE_BOX),
-                        ..default()
-                    })
-                });
+            // parent
+            //     .spawn(NodeBundle {
+            //         style: Style {
+            //             height: Val::Auto,
+            //             width: Val::Auto,
+            //             justify_content: JustifyContent::Center,
+            //             row_gap: Val::Px(20.0),
+            //             column_gap: Val::Px(20.0),
+            //             ..default()
+            //         },
+            //         ..default()
+            //     })
+            //     .with_children(|parent| {
+            //         //scorebox
+            //         parent.spawn(NodeBundle {
+            //             style: {},
+            //             background_color: BackgroundColor(colours::SCORE_BOX),
+            //             ..default()
+            //         })
+            //     });
         });
 }
