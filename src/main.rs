@@ -170,7 +170,7 @@ fn spawn_tile(commands: &mut Commands, board: &Board, font_spec: &Res<FontSpec>,
                             color: Color::BLACK,
                         },
                     )
-                    .with_alignment(TextAlignment::Center),
+                    .with_justify(JustifyText::Center),
                     transform: Transform::from_xyz(0.0, 0.0, 1.0),
                     ..default()
                 })
@@ -181,16 +181,14 @@ fn spawn_tile(commands: &mut Commands, board: &Board, font_spec: &Res<FontSpec>,
 }
 
 fn render_tiles(
-    mut tiles: Query<(&mut Transform, &Position, Changed<Position>)>,
+    mut tiles: Query<(&mut Transform, &Position), Changed<Position>>,
     query_board: Query<&Board>,
 ) {
     let board = query_board.single();
 
-    for (mut transform, pos, pos_changed) in tiles.iter_mut() {
-        if pos_changed {
-            transform.translation.x = board.cell_position_to_coordinate(pos.x);
-            transform.translation.y = board.cell_position_to_coordinate(pos.y);
-        }
+    for (mut transform, pos) in tiles.iter_mut() {
+        transform.translation.x = board.cell_position_to_coordinate(pos.x);
+        transform.translation.y = board.cell_position_to_coordinate(pos.y);
     }
 }
 
@@ -222,10 +220,10 @@ impl TryFrom<&KeyCode> for BoardShift {
 
     fn try_from(value: &KeyCode) -> Result<Self, Self::Error> {
         match value {
-            KeyCode::Left => Ok(BoardShift::Left),
-            KeyCode::Up => Ok(BoardShift::Up),
-            KeyCode::Right => Ok(BoardShift::Right),
-            KeyCode::Down => Ok(BoardShift::Down),
+            KeyCode::ArrowLeft => Ok(BoardShift::Left),
+            KeyCode::ArrowUp => Ok(BoardShift::Up),
+            KeyCode::ArrowRight => Ok(BoardShift::Right),
+            KeyCode::ArrowDown => Ok(BoardShift::Down),
             _ => Err("not a valid board_shift key"),
         }
     }
@@ -280,7 +278,7 @@ impl BoardShift {
 
 fn board_shift(
     mut commands: Commands,
-    input: Res<Input<KeyCode>>,
+    input: Res<ButtonInput<KeyCode>>,
     mut tiles: Query<(Entity, &mut Position, &mut Points)>,
     query_board: Query<&Board>,
     mut tile_writer: EventWriter<NewTileEvent>,
