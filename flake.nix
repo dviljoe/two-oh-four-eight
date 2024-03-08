@@ -10,11 +10,17 @@
       let
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs { inherit system overlays; };
+        rust-stable = pkgs.rust-bin.stable.latest.default.override {
+          extensions = [ "rust-src" ];
+        };
       in with pkgs; {
         devShells.default = mkShell rec {
           nativeBuildInputs = [
+            semgrep
             pkg-config
-            rust-bin.stable.latest.default
+            rust-bin.stable.latest.clippy
+            rust-bin.stable.latest.rust-analyzer
+            rust-stable
             clang
             mold
 
