@@ -23,6 +23,7 @@
             rust-stable
             clang
             mold
+            gnumake
 
           ];
           buildInputs = [

@@ -12,7 +12,7 @@ fn main() {
         .insert_resource(ClearColor(Color::hex("1f2638").unwrap()))
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                title: "2048: Two-oh-four-eight".to_string(),
+                title: "2048 / Two-oh-four-eight".to_string(),
                 ..default()
             }),
             ..default()

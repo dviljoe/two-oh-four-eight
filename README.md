@@ -13,7 +13,7 @@ Development is done using Nix to manage the installed Rust components. Check usa
  
 ```shellsession
 nix shell
-cargo run
+make run
 ```
 
 ## Using Nix and direnv
