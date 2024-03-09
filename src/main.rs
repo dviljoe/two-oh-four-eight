@@ -2,6 +2,7 @@ mod colours;
 mod ui;
 
 use bevy::prelude::*;
+use bevy_easings::*;
 use itertools::Itertools;
 use rand::prelude::IteratorRandom;
 use std::{cmp::Ordering, collections::HashMap, ops::Range};
@@ -16,6 +17,7 @@ fn main() {
             }),
             ..default()
         }))
+        .add_plugins(EasingsPlugin)
         .add_plugins(ui::GameUIPlugin)
         .init_resource::<FontSpec>()
         .init_resource::<Game>()
@@ -183,14 +185,22 @@ fn spawn_tile(commands: &mut Commands, board: &Board, font_spec: &Res<FontSpec>,
 }
 
 fn render_tiles(
-    mut tiles: Query<(&mut Transform, &Position), Changed<Position>>,
+    mut commands: Commands,
+    mut tiles: Query<(Entity, &Transform, &Position), Changed<Position>>,
     query_board: Query<&Board>,
 ) {
     let board = query_board.single();
 
-    for (mut transform, pos) in tiles.iter_mut() {
-        transform.translation.x = board.cell_position_to_coordinate(pos.x);
-        transform.translation.y = board.cell_position_to_coordinate(pos.y);
+    for (entity, transform, pos) in tiles.iter_mut() {
+        let x = board.cell_position_to_coordinate(pos.x);
+        let y = board.cell_position_to_coordinate(pos.y);
+        commands.entity(entity).insert(transform.ease_to(
+            Transform::from_xyz(x, y, transform.translation.z),
+            EaseFunction::QuadraticIn,
+            EasingType::Once {
+                duration: std::time::Duration::from_millis(100),
+            },
+        ));
     }
 }
 
