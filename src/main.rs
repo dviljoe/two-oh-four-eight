@@ -4,7 +4,7 @@ mod ui;
 use bevy::prelude::*;
 use itertools::Itertools;
 use rand::prelude::IteratorRandom;
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::HashMap, ops::Range};
 
 fn main() {
     App::new()
@@ -19,6 +19,7 @@ fn main() {
         .add_plugins(ui::GameUIPlugin)
         .init_resource::<FontSpec>()
         .init_resource::<Game>()
+        .init_state::<RunState>()
         .add_systems(
             Startup,
             (setup, spawn_board, apply_deferred, spawn_tiles).chain(),
@@ -30,7 +31,9 @@ fn main() {
                 board_shift,
                 render_tiles,
                 new_tile_handler,
-            ),
+                end_game,
+            )
+                .run_if(in_state(RunState::Playing)),
         )
         .add_event::<NewTileEvent>()
         .run()
@@ -64,12 +67,12 @@ struct Game {
 #[derive(Component)]
 struct TileText;
 
-#[derive(Debug, Component)]
+#[derive(Debug, Component, PartialEq)]
 struct Points {
     value: u32,
 }
 
-#[derive(Debug, Component, PartialEq)]
+#[derive(Debug, Component, PartialEq, Eq, Hash)]
 struct Position {
     x: u8,
     y: u8,
@@ -371,4 +374,49 @@ fn new_tile_handler(
             spawn_tile(&mut commands, board, &font_spec, pos)
         }
     }
+}
+
+fn end_game(
+    tiles: Query<(&Position, &Points)>,
+    query_board: Query<&Board>,
+    mut run_state: ResMut<NextState<RunState>>,
+) {
+    let board = query_board.single();
+
+    if tiles.iter().len() == 16 {
+        let map: HashMap<&Position, &Points> = tiles.iter().collect();
+        let neighbor_points = [(-1, 0), (0, 1), (1, 0), (0, -1)];
+        let board_range: Range<i8> = 0..(board.size as i8);
+
+        let has_move = tiles.iter().any(|(Position { x, y }, value)| {
+            neighbor_points
+                .iter()
+                .filter_map(|(x2, y2)| {
+                    let new_x = *x as i8 - x2;
+                    let new_y = *y as i8 - y2;
+
+                    if !board_range.contains(&new_x) || !board_range.contains(&new_y) {
+                        return None;
+                    }
+
+                    map.get(&Position {
+                        x: new_x.try_into().unwrap(),
+                        y: new_y.try_into().unwrap(),
+                    })
+                })
+                .any(|&v| v == value)
+        });
+
+        if has_move == false {
+            dbg!("game over!");
+            run_state.set(RunState::GameOver);
+        }
+    }
+}
+
+#[derive(Default, Debug, Clone, Eq, PartialEq, Hash, States)]
+enum RunState {
+    #[default]
+    Playing,
+    GameOver,
 }
