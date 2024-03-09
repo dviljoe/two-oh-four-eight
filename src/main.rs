@@ -20,10 +20,8 @@ fn main() {
         .init_resource::<FontSpec>()
         .init_resource::<Game>()
         .init_state::<RunState>()
-        .add_systems(
-            Startup,
-            (setup, spawn_board, apply_deferred, spawn_tiles).chain(),
-        )
+        .add_systems(Startup, (setup, spawn_board, apply_deferred).chain())
+        .add_systems(OnEnter(RunState::Playing), (game_reset, spawn_tiles))
         .add_systems(
             Update,
             (
@@ -62,6 +60,7 @@ impl FromWorld for FontSpec {
 #[derive(Default, Resource)]
 struct Game {
     score: u32,
+    score_best: u32,
 }
 
 #[derive(Component)]
@@ -292,8 +291,10 @@ fn board_shift(
         .find_map(|key_code| BoardShift::try_from(key_code).ok());
 
     if let Some(shift) = shift_direction {
-        dbg!(game.score);
         tile_writer.send(NewTileEvent);
+        if game.score_best < game.score {
+            game.score_best = game.score;
+        }
 
         let mut it = tiles
             .iter_mut()
@@ -419,4 +420,16 @@ enum RunState {
     #[default]
     Playing,
     GameOver,
+}
+
+fn game_reset(
+    mut commands: Commands,
+    tiles: Query<Entity, With<Position>>,
+    mut game: ResMut<Game>,
+) {
+    for entity in tiles.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    game.score = 0;
 }

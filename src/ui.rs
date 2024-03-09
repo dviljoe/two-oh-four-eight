@@ -1,6 +1,6 @@
 mod styles;
 
-use crate::{colours, FontSpec, Game};
+use crate::{colours, FontSpec, Game, RunState};
 use bevy::prelude::*;
 
 pub struct GameUIPlugin;
@@ -8,7 +8,7 @@ pub struct GameUIPlugin;
 impl Plugin for GameUIPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, (setup_ui,))
-            .add_systems(Update, (scoreboard,));
+            .add_systems(Update, (scoreboard, button_interaction, button_text));
     }
 }
 
@@ -152,4 +152,59 @@ fn setup_ui(mut commands: Commands, font_spec: Res<FontSpec>) {
 fn scoreboard(game: Res<Game>, mut query_scores: Query<&mut Text, With<ScoreDisplay>>) {
     let mut text = query_scores.single_mut();
     text.sections[0].value = game.score.to_string();
+}
+
+fn button_interaction(
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<Button>),
+    >,
+    run_state: Res<State<RunState>>,
+    mut next_state: ResMut<NextState<RunState>>,
+) {
+    for (interaction, mut color) in interaction_query.iter_mut() {
+        match interaction {
+            Interaction::Pressed => {
+                *color = colours::button::PRESSED.into();
+
+                match run_state.get() {
+                    RunState::Playing => {
+                        next_state.set(RunState::GameOver);
+                    }
+
+                    RunState::GameOver => {
+                        next_state.set(RunState::Playing);
+                    }
+                }
+            }
+            Interaction::Hovered => {
+                *color = colours::button::HOVERED.into();
+            }
+            Interaction::None => {
+                *color = colours::button::NORMAL.into();
+            }
+        }
+    }
+}
+
+fn button_text(
+    button_query: Query<&Children, With<Button>>,
+    mut text_query: Query<&mut Text>,
+    run_state: Res<State<RunState>>,
+) {
+    let children = button_query.single();
+    let first_child_entity = children
+        .first()
+        .expect("expect button to have a first child");
+
+    let mut text = text_query.get_mut(*first_child_entity).unwrap();
+
+    match run_state.get() {
+        RunState::Playing => {
+            text.sections[0].value = "End Game".to_string();
+        }
+        RunState::GameOver => {
+            text.sections[0].value = "New Game".to_string();
+        }
+    }
 }
